@@ -1,0 +1,20 @@
+{
+    "name": "madhankumar/directory-manager",
+    "description": "A PHP package for directory and file management",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Madhankumar\\DirectoryManager\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "madhan14",
+            "email": "madhankumar05072000@protonmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    }
+}
