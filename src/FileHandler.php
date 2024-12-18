@@ -1,6 +1,6 @@
 <?php
 
-namespace DirectoryManager;
+namespace Madhankumar\DirectoryManager;
 
 class FileHandler
 {

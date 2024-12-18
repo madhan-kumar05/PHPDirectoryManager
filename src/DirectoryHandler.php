@@ -1,12 +1,12 @@
 <?php
 
-namespace DirectoryManager;
+namespace Madhankumar\DirectoryManager;
 
-use DirectoryManager\Helpers\PathHelper;
+use Madhankumar\DirectoryManager\Helpers\PathHelper;
 
 class DirectoryHandler
 {
-    public function listDirectories(string $path): array
+    public function listDirectories(string $base_directory): array
     {
         $folders = [];
         $files = [];
@@ -99,5 +99,27 @@ class DirectoryHandler
     public function move(string $oldPath, string $newPath): bool
     {
         return rename($oldPath, $newPath);
+    }
+
+    function get_directory_size($directory) {
+        $size = 0;
+        $files = scandir($directory);
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            $full_path = $directory . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($full_path)) {
+                // Recursive call for nested directories
+                $size += $this->get_directory_size($full_path);
+            } else {
+                // Get the file size
+                $size += filesize($full_path);
+            }
+        }
+
+        return $size;
     }
 }

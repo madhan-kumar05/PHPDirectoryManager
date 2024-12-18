@@ -1,11 +1,11 @@
 <?php
 
-namespace DirectoryManager;
+namespace Madhankumar\DirectoryManager;
 
 use DirectoryManager\Exceptions\DirectoryManagerException;
 use DirectoryManager\Helpers\PathHelper;
-use DirectoryManager\DirectoryHandler;
-use DirectoryManager\FileHandler;
+use Madhankumar\DirectoryManager\DirectoryHandler;
+use Madhankumar\DirectoryManager\FileHandler;
 
 class DirectoryManager
 {
@@ -18,7 +18,7 @@ class DirectoryManager
         $this->fileHandler = new FileHandler();
     }
 
-    public function listDirectories(string $path): array
+    public function listDirectory(string $path): array
     {
         return $this->directoryHandler->listDirectories($path);
     }
