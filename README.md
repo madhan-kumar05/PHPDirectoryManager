@@ -1,6 +1,6 @@
 # PHP Directory manager
-![![Latest Version on Packagist][ico-version]][link-packagist]
-[![Software License][ico-license]](LICENSE)
+[![Latest Version on Packagist][ico-version]][link-packagist]
+
 A PHP package for manage your directory
 ## Setup
 Ensure you have [composer](http://getcomposer.org) installed, then run the following command:
@@ -53,3 +53,8 @@ The above function list all folders and files in the below format
     ]
 }
 ```
+
+Author: Madhankumar <madhantocontact@gmail.com>
+
+[ico-version]: https://img.shields.io/packagist/v/madhankumar/directory-manager.svg
+[link-packagist]: https://packagist.org/packages/madhankumar/directory-manager
