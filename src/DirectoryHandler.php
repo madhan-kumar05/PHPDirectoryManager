@@ -65,40 +65,87 @@ class DirectoryHandler
         ];
     }
 
-    public function addFolder(string $folderName, string $destination): bool
+    public function addDirectory(string $folderName, string $destination): string
     {
         $fullPath = PathHelper::joinPaths($destination, $folderName);
 
-        if (!mkdir($fullPath, 0777, true)) {
-            throw new \Exception("Failed to create folder at $fullPath");
+        if (is_dir($fullPath)) {
+            return "Directory already exists at given path: $folderName";
         }
-        return true;
+
+        return mkdir($fullPath, 0777, true) ? "Directory created at $destination" : "Failed to create folder at $fullPath";
     }
 
-    public function rename(string $oldPath, string $newPath): bool
+    public function renameDirectory(string $oldFolderName, string $newFolderName, string $destination): string
     {
-        return rename($oldPath, $newPath);
+        $oldPath = PathHelper::joinPaths($destination, $oldFolderName);
+        $newPath = PathHelper::joinPaths($destination, $newFolderName);
+
+        if (!is_dir($oldPath)) {
+            return "Directory not exists at given path: $oldFolderName";
+        }
+
+        if (is_dir($newPath)) {
+            return "Directory already exists at given path: $newFolderName";
+        }
+
+        return rename($oldPath, $newPath) ? "Directory renamed from $oldFolderName to $newFolderName" : "Failed to rename directory";
     }
 
-    public function delete(string $path): bool
+    public function deleteDirectory(string $path): string
     {
         if (!is_dir($path)) {
-            return false; // Not a directory
+            return "Directory not exists at given path: $path";
         }
 
-        $files = array_diff(scandir($path), array('.', '..'));
+        $files = array_diff(scandir($path), ['.', '..']);
 
         foreach ($files as $file) {
-            $fullPath = "$path/$file";
-            is_dir($fullPath) ? $this->delete($fullPath) : unlink($fullPath);
+            $fullPath = PathHelper::joinPaths($path, $file);
+            is_dir($fullPath) ? $this->deleteDirectory($fullPath) : unlink($fullPath);
         }
 
-        return rmdir($path);
+        return rmdir($path) ? "Directory deleted at $path successfully" : "Failed to delete directory at $path";
     }
 
-    public function move(string $oldPath, string $newPath): bool
+    public function moveDirectory(string $oldPath, string $newPath): string
     {
-        return rename($oldPath, $newPath);
+        if (is_dir($newPath)) {
+            return "Directory already exists at given path: $newPath";
+        }
+
+        if (!is_dir($oldPath)) {
+            return "Directory not exists at given path: $oldPath";
+        }
+
+        return rename($oldPath, $newPath) ? "Directory moved successfully" : "Failed to move directory";
+    }
+
+    public function copyDirectory(string $source, string $destination): string
+    {
+        if (!is_dir($source)) {
+            return "Source directory does not exist: $source";
+        }
+
+        if (!file_exists($destination)) {
+            mkdir($destination, 0755, true);
+        }
+
+        $files = array_diff(scandir($source), ['.', '..']);
+        foreach ($files as $file) {
+            $srcPath = PathHelper::joinPaths($source, $file);
+            $destPath = PathHelper::joinPaths($destination, $file);
+
+            if (is_dir($srcPath)) {
+                $this->copyDirectory($srcPath, $destPath);
+            } else {
+                if (!copy($srcPath, $destPath)) {
+                    return "Failed to copy file: $srcPath to $destPath";
+                }
+            }
+        }
+
+        return "Directory copied successfully to '$destination'";
     }
 
     function get_directory_size($directory) {

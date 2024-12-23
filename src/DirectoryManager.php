@@ -23,14 +23,36 @@ class DirectoryManager
         return $this->directoryHandler->listDirectories($path);
     }
 
+    // Directory
+    public function addFolder(string $folderName, string $destination): string
+    {
+        return $this->directoryHandler->addDirectory($folderName, $destination);
+    }
+
+    public function renameFolder(string $oldFolderName, string $newFolderName, string $destination): string
+    {
+        return $this->directoryHandler->renameDirectory($oldFolderName, $newFolderName, $destination);
+    }
+
+    public function deleteFolder(string $path): string
+    {
+        return $this->directoryHandler->deleteDirectory($path);
+    }
+
+    public function moveFolder(string $oldPath, string $newPath): string
+    {
+        return $this->directoryHandler->moveDirectory($oldPath, $newPath);
+    }
+
+    public function copyFolder(string $oldPath, string $newPath): string
+    {
+        return $this->directoryHandler->copyDirectory($oldPath, $newPath);
+    }
+
+    // File
     public function addFile(array $fileDetails, string $destination): bool
     {
         return $this->fileHandler->addFile($fileDetails, $destination);
-    }
-
-    public function addFolder(string $folderName, string $destination): bool
-    {
-        return $this->directoryHandler->addFolder($folderName, $destination);
     }
 
     public function rename(string $oldPath, string $newPath): bool

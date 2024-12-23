@@ -1,6 +1,6 @@
 <?php
 
-namespace DirectoryManager\Helpers;
+namespace Madhankumar\DirectoryManager\Helpers;
 
 class PathHelper
 {
