@@ -57,20 +57,61 @@ class DirectoryManager
 
     public function rename(string $oldPath, string $newPath): bool
     {
-        return $this->directoryHandler->rename($oldPath, $newPath) 
-            || $this->fileHandler->rename($oldPath, $newPath);
+        if (!file_exists($oldPath)) {
+            throw new \Exception("Source path does not exist: $oldPath");
+        }
+
+        if (is_dir($oldPath)) {
+            return $this->directoryHandler->rename($oldPath, $newPath);
+        } elseif (is_file($oldPath)) {
+            return $this->fileHandler->rename($oldPath, $newPath);
+        } else {
+            throw new \Exception("Source path is not a file or directory: $oldPath");
+        }
     }
 
     public function delete(string $path): bool
     {
-        return is_dir($path) 
-            ? $this->directoryHandler->delete($path) 
-            : $this->fileHandler->delete($path);
+        if (!file_exists($path)) {
+            throw new \Exception("Path does not exist: $path");
+        }
+
+        if (is_dir($path)) {
+            return $this->directoryHandler->delete($path);
+        } elseif (is_file($path)) {
+            return $this->fileHandler->delete($path);
+        } else {
+            throw new \Exception("Path is not a file or directory: $path");
+        }
     }
 
     public function move(string $oldPath, string $newPath): bool
     {
-        return $this->directoryHandler->move($oldPath, $newPath) 
-            || $this->fileHandler->move($oldPath, $newPath);
+        if (!file_exists($oldPath)) {
+            throw new \Exception("Source path does not exist: $oldPath");
+        }
+
+        if (is_dir($oldPath)) {
+            return $this->directoryHandler->move($oldPath, $newPath);
+        } elseif (is_file($oldPath)) {
+            return $this->fileHandler->move($oldPath, $newPath);
+        } else {
+            throw new \Exception("Source path is not a file or directory: $oldPath");
+        }
+    }
+
+    public function readFile(string $filePath): string
+    {
+        return $this->fileHandler->readFile($filePath);
+    }
+
+    public function updateFile(string $filePath, string $content): bool
+    {
+        return $this->fileHandler->updateFile($filePath, $content);
+    }
+
+    public function createFile(string $destination, string $fileName, string $content = ''): bool
+    {
+        return $this->fileHandler->createFile($destination, $fileName, $content);
     }
 }

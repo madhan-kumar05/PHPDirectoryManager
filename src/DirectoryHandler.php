@@ -65,71 +65,119 @@ class DirectoryHandler
         ];
     }
 
-    public function addDirectory(string $folderName, string $destination): string
+    public function addDirectory(string $folderName, string $destination): bool
     {
         $fullPath = PathHelper::joinPaths($destination, $folderName);
 
         if (is_dir($fullPath)) {
-            return "Directory already exists at given path: $folderName";
+            throw new \Exception("Directory already exists at given path: $fullPath");
         }
 
-        return mkdir($fullPath, 0777, true) ? "Directory created at $destination" : "Failed to create folder at $fullPath";
+        if (!is_writable($destination)) {
+            throw new \Exception("Destination directory is not writable: $destination");
+        }
+
+        if (!mkdir($fullPath, 0777, true)) {
+            throw new \Exception("Failed to create directory at $fullPath");
+        }
+        return true;
     }
 
-    public function renameDirectory(string $oldFolderName, string $newFolderName, string $destination): string
+    public function renameDirectory(string $oldFolderName, string $newFolderName, string $destination): bool
     {
         $oldPath = PathHelper::joinPaths($destination, $oldFolderName);
         $newPath = PathHelper::joinPaths($destination, $newFolderName);
 
         if (!is_dir($oldPath)) {
-            return "Directory not exists at given path: $oldFolderName";
+            throw new \Exception("Directory not found at path: $oldPath");
         }
 
         if (is_dir($newPath)) {
-            return "Directory already exists at given path: $newFolderName";
+            throw new \Exception("Directory already exists at given path: $newPath");
         }
 
-        return rename($oldPath, $newPath) ? "Directory renamed from $oldFolderName to $newFolderName" : "Failed to rename directory";
+        if (!is_writable($destination)) {
+            throw new \Exception("Destination directory is not writable: $destination");
+        }
+
+        if (!rename($oldPath, $newPath)) {
+            throw new \Exception("Failed to rename directory from $oldPath to $newPath");
+        }
+        return true;
     }
 
-    public function deleteDirectory(string $path): string
+    public function deleteDirectory(string $path): bool
     {
         if (!is_dir($path)) {
-            return "Directory not exists at given path: $path";
+            throw new \Exception("Directory not found at path: $path");
         }
 
+        if (!is_writable(dirname($path))) {
+            throw new \Exception("Parent directory is not writable: " . dirname($path));
+        }
+        
         $files = array_diff(scandir($path), ['.', '..']);
 
         foreach ($files as $file) {
             $fullPath = PathHelper::joinPaths($path, $file);
-            is_dir($fullPath) ? $this->deleteDirectory($fullPath) : unlink($fullPath);
+            if (is_dir($fullPath)) {
+                $this->deleteDirectory($fullPath);
+            } else {
+                if (!is_writable($fullPath) || !unlink($fullPath)) {
+                    throw new \Exception("Failed to delete file: $fullPath");
+                }
+            }
         }
 
-        return rmdir($path) ? "Directory deleted at $path successfully" : "Failed to delete directory at $path";
+        if (!rmdir($path)) {
+            throw new \Exception("Failed to delete directory at $path");
+        }
+        return true;
     }
 
-    public function moveDirectory(string $oldPath, string $newPath): string
+    public function moveDirectory(string $oldPath, string $newPath): bool
     {
-        if (is_dir($newPath)) {
-            return "Directory already exists at given path: $newPath";
-        }
-
         if (!is_dir($oldPath)) {
-            return "Directory not exists at given path: $oldPath";
+            throw new \Exception("Source directory not found at path: $oldPath");
         }
 
-        return rename($oldPath, $newPath) ? "Directory moved successfully" : "Failed to move directory";
+        if (is_dir($newPath)) {
+            throw new \Exception("Destination directory already exists at path: $newPath");
+        }
+
+        // Check if the parent directory of the new path is writable
+        $newPathParent = dirname($newPath);
+        if (!is_dir($newPathParent) || !is_writable($newPathParent)) {
+            throw new \Exception("Destination parent directory is not writable or does not exist: $newPathParent");
+        }
+        
+        if (!is_writable($oldPath)) {
+            throw new \Exception("Source directory is not writable: $oldPath");
+        }
+
+        if (!rename($oldPath, $newPath)) {
+            throw new \Exception("Failed to move directory from $oldPath to $newPath");
+        }
+        return true;
     }
 
-    public function copyDirectory(string $source, string $destination): string
+    public function copyDirectory(string $source, string $destination): bool
     {
         if (!is_dir($source)) {
-            return "Source directory does not exist: $source";
+            throw new \Exception("Source directory does not exist: $source");
         }
 
-        if (!file_exists($destination)) {
-            mkdir($destination, 0755, true);
+        if (!is_writable(dirname($destination))) {
+            // Check if the parent of the destination is writable
+             throw new \Exception("Destination directory parent is not writable: " . dirname($destination));
         }
+        
+        if (!file_exists($destination)) {
+            if (!mkdir($destination, 0777, true)) {
+                throw new \Exception("Failed to create destination directory: $destination");
+            }
+        }
+
 
         $files = array_diff(scandir($source), ['.', '..']);
         foreach ($files as $file) {
@@ -137,15 +185,19 @@ class DirectoryHandler
             $destPath = PathHelper::joinPaths($destination, $file);
 
             if (is_dir($srcPath)) {
-                $this->copyDirectory($srcPath, $destPath);
+                // Recursively call copyDirectory for subdirectories
+                if (!$this->copyDirectory($srcPath, $destPath)) {
+                    // If recursive copy fails, throw an exception
+                    throw new \Exception("Failed to copy subdirectory from $srcPath to $destPath");
+                }
             } else {
+                // Copy file
                 if (!copy($srcPath, $destPath)) {
-                    return "Failed to copy file: $srcPath to $destPath";
+                    throw new \Exception("Failed to copy file from $srcPath to $destPath");
                 }
             }
         }
-
-        return "Directory copied successfully to '$destination'";
+        return true;
     }
 
     function get_directory_size($directory) {
@@ -168,5 +220,34 @@ class DirectoryHandler
         }
 
         return $size;
+    }
+
+    public function delete(string $path): bool
+    {
+        return $this->deleteDirectory($path);
+    }
+
+    public function move(string $oldPath, string $newPath): bool
+    {
+        return $this->moveDirectory($oldPath, $newPath);
+    }
+
+    public function rename(string $oldPath, string $newPath): bool
+    {
+        $oldFolderName = basename($oldPath);
+        $newFolderName = basename($newPath);
+        $destination = dirname($oldPath);
+        $newDestination = dirname($newPath);
+
+        if ($destination !== $newDestination) {
+            throw new \Exception("For renaming, the source and destination parent directories must be the same. Use move() to change the parent directory.");
+        }
+
+        if (!is_dir($oldPath)) {
+            throw new \Exception("Source directory not found: $oldPath");
+        }
+        
+        // renameDirectory will handle the other checks like if newFolderName already exists
+        return $this->renameDirectory($oldFolderName, $newFolderName, $destination);
     }
 }
